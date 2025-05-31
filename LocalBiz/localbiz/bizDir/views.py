@@ -79,7 +79,7 @@ def searchView(request:HttpRequest):
         businesses = businesses.filter(city__icontains=city)
     if category:
         businesses = businesses.filter(categories__name__icontains=category)
-    return render(request, "user/search_results.html", {"businesses": businesses.distinct()})
+    return render(request, "user/search.html", {"businesses": businesses.distinct()})
 
 # Map view of all businesses with coordinates
 def mapView(request):
@@ -114,4 +114,4 @@ def loginView(request:HttpRequest):
 @login_required
 def logoutView(request):
     logout(request)
-    return redirect("bizDir/home/")
+    return redirect("homepage")
