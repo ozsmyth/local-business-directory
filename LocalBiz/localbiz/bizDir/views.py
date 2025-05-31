@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpRequest
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-# from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.db.models import Q
 from .models import Business, BusinessCategory, BusinessHours, BusinessImage, Review
 
@@ -43,17 +43,31 @@ def mapView(request):
     return render(request, "user/map.html", {})
 
 # User signup view with form handling
-def signupView(request):
-    pass
-    return render(request, "auth/signup.html", {})
+def signupView(request:HttpRequest):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  # Automatically log the user in
+            return redirect("home")
+    else:
+        form = UserCreationForm()
+    return render(request, "auth/signup.html", {"form": form})
 
 # User login with form validation
-def loginView(request):
-    pass
-    return render(request, "auth/login.html", {})
+def loginView(request:HttpRequest):
+    if request.method == "POST":
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect("home")
+    else:
+        form = AuthenticationForm()
+    return render(request, "auth/login.html", {"form": form})
 
 # Logout view, Ends user session and redirects to homepage
 @login_required
 def logoutView(request):
     logout(request)
-    return redirect("")
+    return redirect("bizDir/home/")
