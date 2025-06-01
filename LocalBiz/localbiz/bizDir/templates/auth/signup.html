@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Create an Account</h2>
+
+    <form id="signupForm" method="post" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        {% if error %}
+            <div class="message error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+            <div class="message success">{{ success }}</div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label for="id_username" class="form-label">Username</label>
+            <input type="text" name="username" id="id_username" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_email" class="form-label">Email</label>
+            <input type="email" name="email" id="id_email" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_password1" class="form-label">Password</label>
+            <input type="password" name="password1" id="id_password1" class="form-control" required>
+            <small id="strengthMsg" class="form-text"></small>
+        </div>
+
+        <div class="mb-3">
+            <label for="confirm_password" class="form-label">Confirm Password</label>
+            <input type="password" id="confirm_password" name="password2" class="form-control" required>
+        </div>
+
+        <span class="text-danger" id="signupErrorMsg"></span><br>
+
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+    document.getElementById("signupForm").addEventListener("submit", function (e) {
+        const pwd = document.getElementById("id_password1").value;
+        const confirmPwd = document.getElementById("confirm_password").value;
+        const errorMsg = document.getElementById("signupErrorMsg");
+
+        errorMsg.textContent = "";
+
+        if (pwd.length < 8) {
+            errorMsg.textContent = "Password must be at least 8 characters.";
+            e.preventDefault();
+        } else if (pwd !== confirmPwd) {
+            errorMsg.textContent = "Passwords do not match.";
+            e.preventDefault();
+        }
+    });
+
+    document.getElementById("id_password1").addEventListener("input", function () {
+        const pwd = this.value;
+        const strengthMsg = document.getElementById("strengthMsg");
+        let strength = "Weak";
+        if (pwd.length >= 8 && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd)) {
+            strength = "Strong";
+        } else if (pwd.length >= 6) {
+            strength = "Moderate";
+        }
+        strengthMsg.textContent = "Strength: " + strength;
+    });
+</script>
+{% endblock %}
+
+{% endblock %}
