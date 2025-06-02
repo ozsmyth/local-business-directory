@@ -32,9 +32,15 @@
                     {% for business in businesses %}
                     <div class="col">
                         <div class="card shadow-sm">
-                            {% if business.logo %}
+                            <!-- {% if business.logo %}
                             <img src="{{ business.logo.url }}" class="card-img-top" alt="{{ business.name }} logo">
+                            {% endif %} -->
+                            {% if business.logo %}
+                                <img src="{{ business.logo.url }}" alt="{{ business.name }} logo" class="img-fluid">
+                            {% else %}
+                                <img src="{% static 'img/default-logo1.png' %}" alt="Default logo" class="img-fluid">
                             {% endif %}
+
                             <div class="card-body">
                                 <h5 class="card-title">{{ business.name }}</h5>
                                 <p class="card-text">{{ business.description|truncatewords:20 }}</p>

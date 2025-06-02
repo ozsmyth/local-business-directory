@@ -39,7 +39,6 @@ def businessInfo(request:HttpRequest, slug):
     }
     return render(request, "user/bizinfo.html", context)
 
-
 # Business owner dashboard view (requires login)
 # Shows all businesses owned by the logged-in user
 @login_required(login_url='/bizDir/login')
@@ -154,21 +153,6 @@ def loginView(request:HttpRequest):
             return render(request, "auth/login.html", {"error":"Error Occurred.... Username or email required."})
     return render(request, "auth/login.html", {"error": "", "success": ""})
 
-# @login_required(login_url='/bizDir/login')
-# def addBusiness(request:HttpRequest):
-#     if request.method == "POST":
-#         form = BusinessForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             business = form.save(commit=False)
-#             business.owner = request.user
-#             business.save()
-#             form.save_m2m() # For ManyToMany relationships
-#             return redirect("owner_dashboard")
-#     else:
-#         form = BusinessForm()
-#     return render(request, "user/add_business.html", {"form": form})
-
-
 @login_required(login_url='/bizDir/login')
 def editBusiness(request:HttpRequest, business_id):
     business = get_object_or_404(Business, id=business_id, owner=request.user)
@@ -180,7 +164,6 @@ def editBusiness(request:HttpRequest, business_id):
     else:
         form = BusinessForm(instance=business)
     return render(request, "user/edit_business.html", {"form": form, "business": business})
-
 
 # Logout view, Ends user session and redirects to homepage
 @login_required(login_url='/bizDir/login')

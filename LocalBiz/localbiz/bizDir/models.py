@@ -40,7 +40,7 @@ class Business(models.Model):
     def save(self, *args, **kwargs): # Added this part
         if not self.slug:
             self.slug = slugify(self.name)
-        super().save(**args, **kwargs)
+        super().save(*args, **kwargs)
     
     def average_rating(self):
         reviews = self.reviews.filter(is_approved=True) # changed this part
