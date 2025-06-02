@@ -5,7 +5,8 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 # from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.db.models import Q
-from .forms import BusinessForm
+from django.db import IntegrityError #import integrity error for handling unique constraint
+from .forms import BusinessForm # You'll create this form
 from .models import Business, BusinessCategory, BusinessHours, BusinessImage, Review
 
 # Create your views here.
@@ -19,35 +20,54 @@ def homepage(request:HttpRequest):
         businesses = businesses.filter(Q(name__icontains=query) | Q(description__icontains=query))
     return render(request, "user/index.html", {"businesses": businesses})
 
+
 # Detailed view of a business with reviews, images and operating hours
 def businessInfo(request:HttpRequest, slug):
     try:
-        business = get_object_or_404(Business, slug=slug, is_active=True)
-        reviews = business.reviews.filter()
-        images = business.images.all()
-        hours = business.hours.all()
-        context = {
-            "business": business,
-            "reviews": reviews,
-            "images": images,
-            "hours": hours
-        }
-        return render(request, "user/bizinfo.html", context)
-    except Exception as e:
-        print(e)
-        return render(request, "user/bizinfo.html", {"error": str(e)})
+        business = Business.objects.filter(slug=slug, is_active=True).first()
+    except Business.DoesNotExist:
+        raise IntegrityError("Business not found")
+    
+    reviews = business.reviews.all() # from Review.business
+    images = business.images.all() # from Review.business
+    hours = business.hours.all() # from Review.business
+    context = {
+        "business": business,
+        "reviews": reviews,
+        "images": images,
+        "hours": hours
+    }
+    return render(request, "user/bizinfo.html", context)
+
 
 # Business owner dashboard view (requires login)
 # Shows all businesses owned by the logged-in user
 @login_required(login_url='/bizDir/login')
 def ownerDashboard(request:HttpRequest):
-    businesses = request.user.owned_businesses.all()
-    return render(request, "user/dashboard.html", {"businesses": businesses})
+    user = request.user
+    businesses = user.owned_businesses.all()
+    form = BusinessForm()
+
+    if request.method == "POST":
+        form = BusinessForm(request.POST, request.FILES)
+        if form.is_valid():
+            business = form.save(commit=False)
+            business.owner = user
+            business.save()
+            form.save_m2m()  # Save M2M fields like categories
+            return redirect("owner_dashboard")
+
+    return render(request, "user/dashboard.html", {
+        "user": user,
+        "businesses": businesses,
+        "form": form,
+    })
+
 
 # Submit or update a review for a business (requires login)
 @login_required(login_url='/bizDir/login')
 def submitReview(request:HttpRequest, slug):
-    business = get_object_or_404(Business, slug=slug, is_active=True)
+    business = Business.objects.get(slug=slug, is_active=True)
     if request.method == "POST":
         try:
             rating = int(request.POST.get("rating"))
@@ -70,6 +90,7 @@ def submitReview(request:HttpRequest, slug):
     # GET request shows empty form
     return render(request, "user/reviewform.html", {"business": business})
 
+
 # Search view with optional filters for query, city, and category
 def searchView(request:HttpRequest):
     query = request.GET.get("q")
@@ -90,6 +111,7 @@ def searchView(request:HttpRequest):
 def mapView(request):
     businesses = Business.objects.filter(latitude__isnull=False, longitude__isnull=False, is_active=True)
     return render(request, "user/map.html", {"businesses": businesses})
+
 
 # User signup view with form handling
 def signupView(request:HttpRequest):
@@ -132,19 +154,19 @@ def loginView(request:HttpRequest):
             return render(request, "auth/login.html", {"error":"Error Occurred.... Username or email required."})
     return render(request, "auth/login.html", {"error": "", "success": ""})
 
-@login_required(login_url='/bizDir/login')
-def addBusiness(request:HttpRequest):
-    if request.method == "POST":
-        form = BusinessForm(request.POST, request.FILES)
-        if form.is_valid():
-            business = form.save(commit=False)
-            business.owner = request.user
-            business.save()
-            form.save_m2m()
-            return redirect("owner_dashboard")
-    else:
-        form = BusinessForm()
-    return render(request, "user/add_business.html", {"form": form})
+# @login_required(login_url='/bizDir/login')
+# def addBusiness(request:HttpRequest):
+#     if request.method == "POST":
+#         form = BusinessForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             business = form.save(commit=False)
+#             business.owner = request.user
+#             business.save()
+#             form.save_m2m() # For ManyToMany relationships
+#             return redirect("owner_dashboard")
+#     else:
+#         form = BusinessForm()
+#     return render(request, "user/add_business.html", {"form": form})
 
 
 @login_required(login_url='/bizDir/login')
@@ -161,7 +183,7 @@ def editBusiness(request:HttpRequest, business_id):
 
 
 # Logout view, Ends user session and redirects to homepage
-@login_required
+@login_required(login_url='/bizDir/login')
 def logoutView(request):
     logout(request)
     return redirect("homepage")

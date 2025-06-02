@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ business.name|default:"Add Business" }}{% endblock %}
+{% block title %}Add Business"{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">{{ business.name|default:"Add New Business" }}</h2>
+    <h2 class="mb-4">Add New Business</h2>
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}

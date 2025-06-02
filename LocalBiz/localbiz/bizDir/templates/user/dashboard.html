@@ -1,42 +1,70 @@
-{% extends "base.html" %}
+<!-- owner_dashboard.html -->
+{% extends 'base.html' %}
 {% load static %}
-{% block title %}My Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Welcome, {{ user.username }}</h2>
+<div class="container py-4">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>Your Business Listings</h4>
-        <a href="{% url 'add_business' %}" class="btn btn-primary">+ Add New Business</a>
-    </div>
+    <h2 class="mb-4">Welcome, {{ user.first_name|default:user.username|capfirst }}</h2>
 
-    {% if businesses %}
-        <div class="row">
-            {% for business in businesses %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
-                        {% if business.logo %}
-                            <img src="{{ business.logo.url }}" class="card-img-top" alt="{{ business.name }}">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ business.name }}</h5>
-                            <p class="card-text">{{ business.city }}, {{ business.state }}</p>
-                            <p><strong>Category:</strong>
-                                {% for category in business.categories.all %}
-                                    {{ category.name }}{% if not forloop.last %}, {% endif %}
-                                {% endfor %}
-                            </p>
-                            <p><strong>Rating:</strong> {{ business.average_rating|floatformat:1 }} / 5</p>
-                            <a href="{% url 'business_detail' business.slug %}" class="btn btn-sm btn-outline-info">View</a>
-                            <a href="{% url 'edit_business' business.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+    <ul class="nav nav-tabs" id="dashboardTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="my-businesses-tab" data-bs-toggle="tab" data-bs-target="#my-businesses" type="button" role="tab">My Businesses</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="add-business-tab" data-bs-toggle="tab" data-bs-target="#add-business" type="button" role="tab">+ Add Business</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3" id="dashboardTabContent">
+        <!-- My Businesses Tab -->
+        <div class="tab-pane fade show active" id="my-businesses" role="tabpanel">
+            {% if businesses %}
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    {% for business in businesses %}
+                    <div class="col">
+                        <div class="card shadow-sm">
+                            {% if business.logo %}
+                            <img src="{{ business.logo.url }}" class="card-img-top" alt="{{ business.name }} logo">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ business.name }}</h5>
+                                <p class="card-text">{{ business.description|truncatewords:20 }}</p>
+                                <a href="{% url 'business_detail' slug=business.slug %}" class="btn btn-sm btn-primary">View</a>
+                                <a href="{% url 'edit_business' business_id=business.id %}" class="btn btn-sm btn-secondary">Edit</a>
+                            </div>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
+            {% else %}
+                <p class="text-muted">You have not added any businesses yet.</p>
+                <p>Click the "Add Business" tab to get started.</p>
+            {% endif %}
         </div>
-    {% else %}
-        <p>You haven't listed any businesses yet.</p>
-    {% endif %}
+
+        <!-- Add Business Tab -->
+        <div class="tab-pane fade" id="add-business" role="tabpanel">
+            <div class="card p-4 shadow">
+                <h4 class="mb-3">Add a New Business</h4>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-success">Save Business</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Bootstrap JS Bundle (for tab switching) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
