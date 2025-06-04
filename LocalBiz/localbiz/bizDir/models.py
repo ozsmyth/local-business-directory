@@ -1,9 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from geopy.geocoders import Nominatim
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 # Create your models here.
+
+class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ('regular', 'Regular User'),
+        ('owner', 'Business Owner'),
+    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='regular')
+
+    def __str__(self):
+        return f"{self.user.username} Profile - {self.get_role_display()}"
 
 class BusinessCategory(models.Model):
     name = models.CharField(max_length=100)
@@ -20,7 +34,7 @@ class Business(models.Model):
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
-    zip_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100, default='Nigeria')
     phone = models.CharField(max_length=20)
     email = models.EmailField()
     website = models.URLField(blank=True)
@@ -37,9 +51,22 @@ class Business(models.Model):
     def __str__(self):
         return self.name
     
-    def save(self, *args, **kwargs): # Added this part
+    def save(self, *args, **kwargs):
+        # Generate slug from name if not already set
         if not self.slug:
             self.slug = slugify(self.name)
+
+        # If not lat\lang and address is provided, try to geocode(i.e convert address to lat and lng coordinates)
+        if (not self.latitude or not self.longitude) and self.address:
+            try:
+                full_address = f"{self.address}, {self.city}, {self.state}, {self.country}"
+                geolocator = Nominatim(user_agent="bizDir")
+                location = geolocator.geocode(full_address)
+                if location:
+                    self.latitude = location.latitude
+                    self.longitude = location.longitude
+            except Exception as e:
+                print(f"Geocoding failed: {e}")
         super().save(*args, **kwargs)
     
     def average_rating(self):
@@ -71,7 +98,11 @@ class BusinessHours(models.Model):
     def __str__(self):
         if self.closed:
             return f"{self.get_day_of_week_display()}: Closed"
-        return f"{self.get_day_of_week_display()}: {self.opening_time} - {self.closing_time}"
+    
+        opening = self.opening_time.strftime('%I:%M %p') if self.opening_time else 'N/A'
+        closing = self.closing_time.strftime('%I:%M %p') if self.closing_time else 'N/A'
+        return f"{self.get_day_of_week_display()}: {opening} - {closing}"
+
 
 class BusinessImage(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='images')

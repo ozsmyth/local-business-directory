@@ -1,13 +1,12 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpRequest
+from django.shortcuts import render, redirect
+from django.http import HttpRequest, Http404
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
-# from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib import messages
 from django.db.models import Q
-from django.db import IntegrityError #import integrity error for handling unique constraint
 from .forms import BusinessForm # You'll create this form
-from .models import Business, BusinessCategory, BusinessHours, BusinessImage, Review
+from .models import Business, BusinessCategory, BusinessHours, BusinessImage, Review, UserProfile
 
 # Create your views here.
 
@@ -20,32 +19,12 @@ def homepage(request:HttpRequest):
         businesses = businesses.filter(Q(name__icontains=query) | Q(description__icontains=query))
     return render(request, "user/index.html", {"businesses": businesses})
 
-
-# Detailed view of a business with reviews, images and operating hours
-def businessInfo(request:HttpRequest, slug):
-    try:
-        business = Business.objects.filter(slug=slug, is_active=True).first()
-    except Business.DoesNotExist:
-        raise IntegrityError("Business not found")
-    
-    reviews = business.reviews.all() # from Review.business
-    images = business.images.all() # from Review.business
-    hours = business.hours.all() # from Review.business
-    context = {
-        "business": business,
-        "reviews": reviews,
-        "images": images,
-        "hours": hours
-    }
-    return render(request, "user/bizinfo.html", context)
-
 # Business owner dashboard view (requires login)
 # Shows all businesses owned by the logged-in user
 @login_required(login_url='/bizDir/login')
 def ownerDashboard(request:HttpRequest):
     user = request.user
     businesses = user.owned_businesses.all()
-    form = BusinessForm()
 
     if request.method == "POST":
         form = BusinessForm(request.POST, request.FILES)
@@ -54,14 +33,56 @@ def ownerDashboard(request:HttpRequest):
             business.owner = user
             business.save()
             form.save_m2m()  # Save M2M fields like categories
+            messages.success(request, "Business added successfully!")
             return redirect("owner_dashboard")
-
-    return render(request, "user/dashboard.html", {
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = BusinessForm()
+    
+    context = {
         "user": user,
         "businesses": businesses,
         "form": form,
-    })
+    }
+    return render(request, "user/dashboard.html", context)
 
+# Detailed view of a business with reviews, images and operating hours
+def businessInfo(request:HttpRequest, slug):
+    try:
+        business = Business.objects.get(slug=slug, is_active=True)
+    except Business.DoesNotExist:
+        raise Http404("Business not found")
+    
+    reviews = Review.objects.filter(business=business) # from Review.business
+    images = BusinessImage.objects.filter(business=business) # from Review.business
+    hours = BusinessHours.objects.filter(business=business) # from Review.business
+    context = {
+        "business": business,
+        "reviews": reviews,
+        "images": images,
+        "hours": hours
+    }
+    return render(request, "user/bizinfo.html", context)
+
+@login_required(login_url='/bizDir/login')
+def editBusiness(request:HttpRequest, business_id):
+    try:
+        business = Business.objects.get(id=business_id, owner=request.user)
+    except Business.DoesNotExist:
+        raise Http404("Business not found.")
+    
+    if request.method == "POST":
+        form = BusinessForm(request.POST, request.FILES, instance=business)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Business updated successfully!")
+            return redirect("owner_dashboard")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = BusinessForm(instance=business)
+    return render(request, "user/edit_business.html", {"form": form, "business": business})
 
 # Submit or update a review for a business (requires login)
 @login_required(login_url='/bizDir/login')
@@ -89,7 +110,6 @@ def submitReview(request:HttpRequest, slug):
     # GET request shows empty form
     return render(request, "user/reviewform.html", {"business": business})
 
-
 # Search view with optional filters for query, city, and category
 def searchView(request:HttpRequest):
     query = request.GET.get("q")
@@ -111,59 +131,74 @@ def mapView(request):
     businesses = Business.objects.filter(latitude__isnull=False, longitude__isnull=False, is_active=True)
     return render(request, "user/map.html", {"businesses": businesses})
 
-
 # User signup view with form handling
-def signupView(request:HttpRequest):
+def signupView(request: HttpRequest):
     if request.method == "POST":
-        username = request.POST.get("username")
-        email = request.POST.get("email")
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
         password1 = request.POST.get("password1")
-        # password2 = request.POST.get("password2")
+        password2 = request.POST.get("password2")
+        role = request.POST.get("role", "regular").strip()
+
+        # Trusting frontend validation (just basic sanity check)
+        if password1 != password2:
+            return render(request, "auth/signup.html", {"error": "Passwords do not match."})
+
+        if User.objects.filter(username=username).exists():
+            return render(request, "auth/signup.html", {"error": "User already exist."})
+
         try:
-            user_exist = User.objects.filter(username=username).first()
-            if user_exist:
-                return render(request, "auth/signup.html", {"error":"User already exist.", "success":None})
-            # Getting here means we are good to signup a user
             user = User.objects.create_user(username=username, email=email, password=password1)
             user.save()
-            print(user)
-            # make a user a business owner
-            Owner = Business.objects.create(owner=user, email=email)
-            Owner.save()
+            # Assign role to profile (safe approach)
+            profile = getattr(user, "profile", None)
+            if profile:
+                profile.role = role
+                profile.save()
+            else:
+                UserProfile.objects.create(user=user, role=role)
             return redirect("loginpage")
-        except:
-            return render(request, "auth/signup.html", {"error":"Invalid Credentials.", "success":None})
-    return render(request, "auth/signup.html", {"error": None, "success":None})
+
+        except Exception as e:
+            print(f"Signup Error: {e}")
+            return render(request, "auth/signup.html", {"error": "Signup failed. Please try again."})
+
+    return render(request, "auth/signup.html")
 
 # User login with form validation
-def loginView(request:HttpRequest):
+def loginView(request: HttpRequest):
     if request.method == "POST":
-        username = request.POST.get("username")
+        username = request.POST.get("username").strip()
         password = request.POST.get("password")
-        #validate inputs
-        if not username or not password:
-            return render(request, "auth/login.html", {"error":"Both username and password are required.", "success":""})
-        try:
-            user = authenticate(username=username, password=password)
-            if user == None:
-                return render(request, "auth/login.html", {"error":"Not a valid user."})
-            login(request, user)
-            return redirect('/bizDir/dashboard/') 
-        except:
-            return render(request, "auth/login.html", {"error":"Error Occurred.... Username or email required."})
-    return render(request, "auth/login.html", {"error": "", "success": ""})
 
-@login_required(login_url='/bizDir/login')
-def editBusiness(request:HttpRequest, business_id):
-    business = get_object_or_404(Business, id=business_id, owner=request.user)
-    if request.method == "POST":
-        form = BusinessForm(request.POST, request.FILES, instance=business)
-        if form.is_valid():
-            form.save()
-            return redirect("owner_dashboard")
-    else:
-        form = BusinessForm(instance=business)
-    return render(request, "user/edit_business.html", {"form": form, "business": business})
+        if not username or not password:
+            return render(request, "auth/login.html", {
+                "error": "Both username and password are required.",
+                "success": ""
+            })
+        user = authenticate(request, username=username, password=password)
+
+        if user is None:
+            return render(request, "auth/login.html", {
+                "error": "Invalid username or password.",
+                "success": ""
+            })
+        
+        login(request, user)
+
+        # Redirect based on role
+        try:
+            if user.profile.role == 'owner':
+                return redirect("owner_dashboard")
+            else:
+                return redirect("homepage")  # or some homepage or listing view for regular users
+        except UserProfile.DoesNotExist:
+            return render(request, "auth/login.html", {
+                "error": "User profile not found.",
+                "success": ""
+            })
+
+    return render(request, "auth/login.html", {"error": "", "success": ""})
 
 # Logout view, Ends user session and redirects to homepage
 @login_required(login_url='/bizDir/login')

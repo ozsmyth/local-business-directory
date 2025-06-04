@@ -20,7 +20,7 @@
             <button class="nav-link active" id="my-businesses-tab" data-bs-toggle="tab" data-bs-target="#my-businesses" type="button" role="tab">My Businesses</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="add-business-tab" data-bs-toggle="tab" data-bs-target="#add-business" type="button" role="tab">+ Add Business</button>
+            <button class="nav-link" id="add-business-tab" data-bs-toggle="tab" data-bs-target="#add-business" type="button" role="tab">Add Business</button>
         </li>
     </ul>
 
@@ -64,7 +64,9 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ form.as_p }}
-                    <button type="submit" class="btn btn-success">Save Business</button>
+                    <button type="submit" class="btn btn-success shadow">
+                        <i class="bi bi-plus-circle"></i>Save Business
+                    </button>
                 </form>
             </div>
         </div>
