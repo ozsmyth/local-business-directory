@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-4">
+      {% if business.logo %}
+        <img src="{{ business.logo.url }}" alt="{{ business.name }}" class="img-fluid rounded shadow-sm mb-3">
+      {% else %}
+        <div class="bg-secondary text-white p-5 text-center">No Logo</div>
+      {% endif %}
+
+      {% if business.featured %}
+        <span class="badge bg-warning text-dark">🌟 Featured</span>
+      {% endif %}
+      {% if business.status != 'active' %}
+        <span class="badge bg-danger">Not Active</span>
+      {% endif %}
+
+      <h5 class="mt-3">Contact Info</h5>
+      <ul class="list-unstyled small">
+        <li><strong>Phone:</strong> {{ business.phone }}</li>
+        <li><strong>Email:</strong> {{ business.email }}</li>
+        <li><strong>Website:</strong> 
+          {% if business.website %} 
+            <a href="{{ business.website }}" target="_blank">{{ business.website }}</a> 
+          {% else %} N/A 
+          {% endif %}
+        </li>
+        <li><strong>Address:</strong> {{ business.address }}, {{ business.city }}, {{ business.state }}</li>
+      </ul>
+    </div>
+
+    <div class="col-md-8">
+      <h2>{{ business.name }}</h2>
+      <p>{{ business.description|linebreaks }}</p>
+      
+      <h5 class="mt-4">Business Hours</h5>
+      <ul class="list-group list-group-flush">
+        {% for hour in hours %}
+          <li class="list-group-item">{{ hour }}</li>
+        {% empty %}
+          <li class="list-group-item">No hours set.</li>
+        {% endfor %}
+      </ul>
+
+      <h5 class="mt-4">Gallery</h5>
+      <div class="row">
+        {% for image in images %}
+          <div class="col-md-4 mb-3">
+            <img src="{{ image.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ image.caption }}">
+          </div>
+        {% empty %}
+          <p class="text-muted">No images available.</p>
+        {% endfor %}
+      </div>
+
+      <h5 class="mt-4">Reviews</h5>
+      {% for review in reviews %}
+        <div class="border p-3 mb-3 rounded">
+          <strong>{{ review.user.username }}</strong>
+          <span class="badge bg-success">{{ review.rating }}/5</span>
+          <p>{{ review.comment }}</p>
+        </div>
+      {% empty %}
+        <p>No reviews yet.</p>
+      {% endfor %}
+
+      <h5 class="mt-4">Leave a Review</h5>
+      {% if request.user.is_authenticated %}
+        <form method="POST">
+          {% csrf_token %}
+          {{ review_form.as_p }}
+          <button class="btn btn-primary" type="submit">Submit</button>
+        </form>
+      {% else %}
+        <p>Please <a href="{% url 'login' %}?next={{ request.path }}">log in</a> to leave a review.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

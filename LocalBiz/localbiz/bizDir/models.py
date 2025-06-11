@@ -1,10 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
-from geopy.geocoders import Nominatim
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
 
 # Create your models here.
 
@@ -22,11 +18,16 @@ class UserProfile(models.Model):
 class BusinessCategory(models.Model):
     name = models.CharField(max_length=100)
     icon = models.CharField(max_length=50, blank=True)  # For frontend display
-    
+
     def __str__(self):
         return self.name
 
 class Business(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('pending', 'Pending'),
+        ('inactive', 'Inactive'),
+    ]
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, blank=True) # Added this part
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_businesses')
@@ -39,15 +40,14 @@ class Business(models.Model):
     email = models.EmailField()
     website = models.URLField(blank=True)
     categories = models.ManyToManyField(BusinessCategory, related_name='businesses')
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
     featured = models.BooleanField(default=False)
     promoted_until = models.DateField(null=True, blank=True) # Added this part
     established_date = models.DateField(null=True, blank=True)
     logo = models.ImageField(upload_to='business_logos/', null=True, blank=True)
     is_active = models.BooleanField(default=True) # Added this part
     views = models.PositiveBigIntegerField(default=0) # Added this part
-    
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+
     def __str__(self):
         return self.name
     
@@ -55,18 +55,6 @@ class Business(models.Model):
         # Generate slug from name if not already set
         if not self.slug:
             self.slug = slugify(self.name)
-
-        # If not lat\lang and address is provided, try to geocode(i.e convert address to lat and lng coordinates)
-        if (not self.latitude or not self.longitude) and self.address:
-            try:
-                full_address = f"{self.address}, {self.city}, {self.state}, {self.country}"
-                geolocator = Nominatim(user_agent="bizDir")
-                location = geolocator.geocode(full_address)
-                if location:
-                    self.latitude = location.latitude
-                    self.longitude = location.longitude
-            except Exception as e:
-                print(f"Geocoding failed: {e}")
         super().save(*args, **kwargs)
     
     def average_rating(self):

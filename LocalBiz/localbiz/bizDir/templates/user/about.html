@@ -1,0 +1,179 @@
+{% extends "starter-page.html" %}
+{% load static %}
+
+{% block title %}About - Local Business Directory{% endblock %} 
+{% block page_title %}About{% endblock %}  
+{% block page_text %}
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.
+    Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, 
+    totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+{% endblock %}
+{% block nav_page %}About{% endblock %}
+   <!-- About Section -->
+    <section id="{% block section_id %}about{% endblock %}" class="{% block section_class %}about{% endblock %} section">
+    {% block section_title %}About{% endblock %}
+    {% block section_text %}About{% endblock %}{% block Section_desc %}Us{% endblock %}
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+{% block content %}
+        <div class="row align-items-center">
+          <div class="col-lg-6" data-aos="zoom-out" data-aos-delay="200">
+            <div class="about-image">
+              <img src="{% static 'assets/img/about/about-square-12.webp' %}" alt="About Our Consulting Firm" class="img-fluid main-image">
+              <div class="experience-badge">
+                <span class="years">15+</span>
+                <span class="text">Years of Experience</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="about-content">
+              <h2>We Help Businesses Reach Their Full Potential</h2>
+              <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.</p>
+              <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+
+              <div class="row features-row">
+                <div class="col-md-6">
+                  <div class="feature-item">
+                    <div class="icon">
+                      <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h4>Business Growth</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="feature-item">
+                    <div class="icon">
+                      <i class="bi bi-lightbulb"></i>
+                    </div>
+                    <h4>Innovative Solutions</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="feature-item">
+                    <div class="icon">
+                      <i class="bi bi-people"></i>
+                    </div>
+                    <h4>Expert Team</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="feature-item">
+                    <div class="icon">
+                      <i class="bi bi-trophy"></i>
+                    </div>
+                    <h4>Proven Results</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section><!-- /About Section -->
+
+    <!-- Why Choose Us Section -->
+    <section id="why-choose-us" class="why-choose-us section">
+
+      <!-- Section Title -->
+      <div class="container section-title" data-aos="fade-up">
+        <h2>Why Choose Us</h2>
+        <div><span>Why Choose</span> <span class="description-title">Our Services</span></div>
+      </div><!-- End Section Title -->
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row align-items-center">
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+            <div class="features-content">
+              <h2>Why Choose Our Consulting Services</h2>
+              <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.</p>
+              <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis.</p>
+
+              <div class="features-list">
+                <div class="feature-item">
+                  <div class="feature-icon">
+                    <i class="bi bi-award"></i>
+                  </div>
+                  <div class="feature-text">
+                    <h4>Industry Expertise</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.</p>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-icon">
+                    <i class="bi bi-graph-up"></i>
+                  </div>
+                  <div class="feature-text">
+                    <h4>Data-Driven Approach</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.</p>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-icon">
+                    <i class="bi bi-clock-history"></i>
+                  </div>
+                  <div class="feature-text">
+                    <h4>Timely Delivery</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.</p>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                  </div>
+                  <div class="feature-text">
+                    <h4>Guaranteed Results</h4>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+            <div class="features-image">
+              <div class="stats-card">
+                <div class="stat-item">
+                  <h3><span data-purecounter-start="0" data-purecounter-end="95" data-purecounter-duration="1" class="purecounter"></span>%</h3>
+                  <p>Client Satisfaction</p>
+                </div>
+                <div class="stat-item">
+                  <h3><span data-purecounter-start="0" data-purecounter-end="250" data-purecounter-duration="1" class="purecounter"></span>+</h3>
+                  <p>Projects Completed</p>
+                </div>
+                <div class="stat-item">
+                  <h3><span data-purecounter-start="0" data-purecounter-end="30" data-purecounter-duration="1" class="purecounter"></span>+</h3>
+                  <p>Industry Awards</p>
+                </div>
+                <div class="stat-item">
+                  <h3><span data-purecounter-start="0" data-purecounter-end="20" data-purecounter-duration="1" class="purecounter"></span>+</h3>
+                  <p>Countries Served</p>
+                </div>
+              </div>
+              <img src="{% static 'assets/img/misc/misc-square-11.webp' %}" alt="" class="img-fluid main-image">
+              <div class="experience-badge">
+                <div class="badge-content">
+                  <span class="number">15+</span>
+                  <span class="text">Years of Excellence</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section><!-- /Why Choose Us Section -->
+{% endblock %}

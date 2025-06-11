@@ -1,35 +1,178 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Home - Local Business Directory{% endblock %}
 
+<!-- Page-specific CSS -->
+{% block extra_css %}
+<style>
+  body{
+    padding-top: 0;
+  }
+  .hero-banner {
+    position: relative;
+    min-height: 100vh;
+    color: #fff;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .hero-banner .overlay {
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+
+  @media (max-width: 768px) {
+    .hero-banner h1 {
+      font-size: 2rem;
+    }
+    .hero-banner p {
+      font-size: 1rem;
+    }
+  }
+  .category-tag {
+    background-color: #f8f9fa;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+  }
+
+  .card{
+    border-width: 0;
+  }
+
+  .category-tag:hover {
+    background-color: #e9f5ff;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+    text-decoration: none;
+  }
+
+  .category-icon {
+    font-size: 2rem;
+    color: #0d6efd;
+  }
+
+  .category-name {
+    color: #6c757d;
+    font-size: 1.5rem;
+  }
+
+  .category-count {
+    /* background-color: #0d6efd; */
+    color: #0d6efd;
+    font-size: 1rem;
+    padding: 0.15rem;
+  }
+
+  .card-img-top {
+    max-height: 180px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .card:hover .card-img-top {
+    transform: scale(1.02);
+  }
+
+  @media (max-width: 576px) {
+    .category-tag {
+      font-size: 0.85rem;
+      padding: 0.3rem 0.6rem;
+    }
+    .category-icon {
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
+{% endblock %}
+
 {% block content %}
-  <h1 class="mb-4">Featured Businesses</h1>
+<div class="hero-banner text-center text-white d-flex align-items-center justify-content-center"
+     style="background: url('{% static "img/banner.webp" %}') center center/cover no-repeat; height: 100vh; position: relative;">
+  <div class="overlay position-absolute top-0 start-0 w-100 h-100" style ="background-color: rgba(0, 0, 0, 0.5);"></div>
 
-  <form method="get" action="{% url 'search' %}" class="mb-5">
-    <div class="input-group">
-      <input type="text" name="q" placeholder="Search businesses..." class="form-control" value="{{ request.GET.q }}">
-      <button class="btn btn-primary" type="submit">Search</button>
-    </div>
-  </form>
+  <div class="container position-relative text-center z-1">
+    <h1 class="display-4 fw-bold">Discover Great Local Businesses</h1>
+    <p class="lead mb-4">Find the best businesses around you - from restaurants to services, shops and more.</p>
 
-  {% if businesses %}
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-      {% for business in businesses %}
-        <div class="col">
-          <div class="card h-100">
-            {% if business.logo %}
-              <img src="{{ business.logo.url }}" class="card-img-top" alt="{{ business.name }}">
-            {% endif %}
-            <div class="card-body">
-              <h5 class="card-title">{{ business.name }}</h5>
-              <p class="card-text">{{ business.description|truncatewords:20 }}</p>
-              <a href="{% url 'business_detail' business.slug %}" class="btn btn-outline-primary">View Details</a>
-            </div>
-          </div>
-        </div>
+    <form method="get" action="{% url 'search' %}" class="mx-auto" style="max-width: 600px;">
+      <div class="input-group shadow">
+        <input type="text" name="q" placeholder="Search businesses..." class="form-control form-control-lg" value="{{ request.GET.q }}">
+        <button class="btn btn-primary btn-lg" type="submit">
+          <i class="bi bi-search"></i> Search
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="container py-4">
+  
+<!-- Category Tags
+  <div class="mb-5">
+    <div class="d-flex flex-wrap gap-2">
+      {% for category in categories %}
+        <a href="?category_id={{ category.id }}" class="category-tag">
+          <i class="{{ category.icon }} category-icon"></i>
+          <span class="category-name">{{ category.name }}</span>
+          <span class="category-count">{{ category.business_count }}</span>
+        </a>
       {% endfor %}
     </div>
-  {% else %}
-    <p>No featured businesses found.</p>
-  {% endif %}
+  </div> -->
+
+<!-- Category Tags -->
+  <div class="container my-5">
+    <h2 class="text-center mb-4">Browse by Category</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 justify-content-center">
+      {% for category in categories %}
+      <div class="col">
+        <div class="card text-center shadow-sm h-100">
+          <a href="{% url 'search' %}?category={{ category.id }}" style="text-decoration: none;">
+          <div class="card-body category-tag">
+              <div class="mb-3 text-primary">
+                <i class="{{ category.icon }} category-icon"></i>
+              </div>
+              <h5 class="category-name">{{ category.name }}</h5>
+              <p class="category-count">{{ category.business_count }} Listings</p>
+          </div>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Featured Businesses -->
+  <div class="container my-5"></div>
+    <h2 class="mb-4 text-center mb-4">Featured Businesses</h2>
+    {% if businesses %}
+      <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for business in businesses %}
+          <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+              {% if business.logo %}
+                <img src="{{ business.logo.url }}" class="card-img-top" alt="{{ business.name }}" style="max-height: 180px; object-fit: cover;">
+              {% else %}
+                <img src="{% static 'img/default-logo1.png' %}" class="card-img-top" alt="Default Logo" style="max-height: 180px; object-fit: cover;">
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title">{{ business.name }}</h5>
+                <p class="card-text text-muted small">{{ business.description|truncatewords:15 }}</p>
+                <a href="{% url 'business_detail' business.slug %}" class="btn btn-sm btn-outline-primary mt-2">
+                  <i class="bi bi-eye"></i> View Details
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">No featured businesses found.</p>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

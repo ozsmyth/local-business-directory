@@ -1,135 +1,257 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpRequest, Http404
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.contrib import messages
-from django.db.models import Q
-from .forms import BusinessForm # You'll create this form
+from django.db.models import Q, Count, Avg
+from .forms import BusinessForm, ReviewForm, BusinessImageFormSet, BusinessHoursFormSet   # You'll create this form
 from .models import Business, BusinessCategory, BusinessHours, BusinessImage, Review, UserProfile
 
 # Create your views here.
 
 # Homepage View with optional search functionality
 # Shows featured and active businesses
-def homepage(request:HttpRequest):
-    query = request.GET.get("q")
-    businesses = Business.objects.filter(featured=True, is_active=True)
+def homepage(request: HttpRequest):
+    query = request.GET.get("q", "")
+    category_id = request.GET.get("category")
+    # Get featured and active businesses
+    businesses = Business.objects.filter(featured=True, is_active=True).select_related("owner").prefetch_related("categories")
+
+    if not businesses.exists():
+        # Fallback to active non-featured businesses
+        businesses = Business.objects.filter(is_active=True).select_related("owner").prefetch_related("categories")
+
     if query:
-        businesses = businesses.filter(Q(name__icontains=query) | Q(description__icontains=query))
-    return render(request, "user/index.html", {"businesses": businesses})
+        # Apply search filter regardless of featured status
+        businesses = businesses.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
+
+    if category_id:
+        businesses = businesses.filter(categories__id=category_id)
+
+    # Get all categories and annotate with business count
+    categories = BusinessCategory.objects.annotate(
+        business_count = Count("businesses", filter=Q(businesses__is_active=True))
+    )
+
+    context = {
+        "businesses": businesses,
+        "query": query,
+        "categories": categories,
+    }
+    return render(request, "user/index.html", context)
 
 # Business owner dashboard view (requires login)
 # Shows all businesses owned by the logged-in user
 @login_required(login_url='/bizDir/login')
-def ownerDashboard(request:HttpRequest):
+def ownerDashboard(request: HttpRequest):
     user = request.user
+
+    # Permission check: Only Business Owners
+    if user.profile.role != 'owner':
+        return redirect('homepage')
+
+    # All businesses by this owner
     businesses = user.owned_businesses.all()
 
+    # Summary Stats
+    business_count = businesses.count()
+    review_count = Review.objects.filter(business__owner=user).count()
+    profile_complete = all([user.first_name, user.email, user.profile.role])
+
+    # Handle form submission
     if request.method == "POST":
         form = BusinessForm(request.POST, request.FILES)
-        if form.is_valid():
+        image_formset = BusinessImageFormSet(request.POST, request.FILES, queryset=BusinessImage.objects.none())
+        hours_formset = BusinessHoursFormSet(request.POST, queryset=BusinessHours.objects.none())
+        if form.is_valid() and image_formset.is_valid() and hours_formset.is_valid():
             business = form.save(commit=False)
             business.owner = user
             business.save()
-            form.save_m2m()  # Save M2M fields like categories
+            form.save_m2m()
+
+            # Save business hours
+            hours = hours_formset.save(commit=False)
+            for hour in hours:
+                hour.business = business
+                hour.save()
+
+            # Save images
+            images = image_formset.save(commit=False)
+            for image in images:
+                image.business = business
+                image.save()
+
             messages.success(request, "Business added successfully!")
             return redirect("owner_dashboard")
         else:
             messages.error(request, "Please correct the errors below.")
     else:
         form = BusinessForm()
-    
+        image_formset = BusinessImageFormSet(queryset=BusinessImage.objects.none(), prefix='images')
+        hours_formset = BusinessHoursFormSet(queryset=BusinessHours.objects.none(), prefix='hours')
+
     context = {
         "user": user,
         "businesses": businesses,
         "form": form,
+        "image_formset": image_formset,
+        "hours_formset": hours_formset,
+        "business_count": business_count,
+        "review_count": review_count,
+        "profile_complete": profile_complete,
     }
     return render(request, "user/dashboard.html", context)
-
-# Detailed view of a business with reviews, images and operating hours
-def businessInfo(request:HttpRequest, slug):
-    try:
-        business = Business.objects.get(slug=slug, is_active=True)
-    except Business.DoesNotExist:
-        raise Http404("Business not found")
-    
-    reviews = Review.objects.filter(business=business) # from Review.business
-    images = BusinessImage.objects.filter(business=business) # from Review.business
-    hours = BusinessHours.objects.filter(business=business) # from Review.business
-    context = {
-        "business": business,
-        "reviews": reviews,
-        "images": images,
-        "hours": hours
-    }
-    return render(request, "user/bizinfo.html", context)
 
 @login_required(login_url='/bizDir/login')
 def editBusiness(request:HttpRequest, business_id):
     try:
+        if request.user.profile.role != 'owner':
+            messages.error(request, "You do not have permission to edit this business.")
+            return redirect('homepage')
+        
         business = Business.objects.get(id=business_id, owner=request.user)
     except Business.DoesNotExist:
         raise Http404("Business not found.")
-    
+
     if request.method == "POST":
         form = BusinessForm(request.POST, request.FILES, instance=business)
-        if form.is_valid():
+        image_formset = BusinessImageFormSet(request.POST, request.FILES, queryset=business.images.all(), prefix='images')
+        hours_formset = BusinessHoursFormSet(request.POST, queryset=business.hours.all(), prefix='hours')
+        if form.is_valid() and image_formset.is_valid() and hours_formset.is_valid():
             form.save()
+
+            for image_form in image_formset:
+                if image_form.cleaned_data.get('DELETE') and image_form.instance.pk:
+                    image_form.instance.delete()
+                else:
+                    image = image_form.save(commit=False)
+                    image.business = business
+                    image.save()
+
+            for hour_form in hours_formset:
+                if hour_form.cleaned_data.get('DELETE') and hour_form.instance.pk:
+                    hour_form.instance.delete()
+                else:
+                    hour = hour_form.save(commit=False)
+                    hour.business = business
+                    hour.save()
+                
             messages.success(request, "Business updated successfully!")
             return redirect("owner_dashboard")
         else:
             messages.error(request, "Please correct the errors below.")
     else:
         form = BusinessForm(instance=business)
-    return render(request, "user/edit_business.html", {"form": form, "business": business})
+        image_formset = BusinessImageFormSet(queryset=business.images.all(), prefix='images')
+        hours_formset = BusinessHoursFormSet(queryset=business.hours.all(), prefix='hours')
+    return render(request, "user/edit_business.html",  {
+        "form": form,
+        "business": business,
+        "image_formset": image_formset,
+        "hours_formset": hours_formset
+    })
 
-# Submit or update a review for a business (requires login)
+# Detailed view of a business with reviews, images and operating hours
 @login_required(login_url='/bizDir/login')
-def submitReview(request:HttpRequest, slug):
-    business = Business.objects.get(slug=slug, is_active=True)
-    if request.method == "POST":
-        try:
-            rating = int(request.POST.get("rating"))
-            comment = request.POST.get("comment")
-            if not (1 <= rating <= 5):
-                raise ValueError("Rating must be between 1 and 5")
-            # Create or update the review
-            Review.objects.update_or_create(
-                business=business,
-                user=request.user,
-                defaults={"rating": rating, "comment": comment}
-            )
-            return redirect("business_detail", slug=slug)
-        except Exception as e:
-            # Return form with error
-            return render(request, "user/reviewform.html", {
-                "business": business,
-                "error": str(e)
-            })
-    # GET request shows empty form
-    return render(request, "user/reviewform.html", {"business": business})
+def businessInfo(request:HttpRequest, slug):
+    try:
+        business = Business.objects.select_related("owner").prefetch_related(
+            "categories", "hours", "images", "reviews__user"
+        ).get(slug=slug, status='active')
+    except Business.DoesNotExist:
+        raise Http404("Business not found")
+    
+    # Increment view count
+    business.views += 1
+    business.save(update_fields=['views'])
+
+    # Handle review submission
+    review_form = None
+    user_review_exists = False
+    if request.user.is_authenticated:
+        user_review_exists = Review.objects.filter(business=business, user=request.user).exists()
+        if not user_review_exists:
+            if request.method == 'POST':
+                review_form = ReviewForm(request.POST)
+                if review_form.is_valid():
+                    new_review = review_form.save(commit=False)
+                    new_review.business = business
+                    new_review.user = request.user
+                    new_review.save()
+                    messages.success(request, "Review submitted successfully!")
+                    return redirect('business_detail', slug=slug)
+            else:
+                review_form = ReviewForm()
+
+    reviews = business.reviews.filter(is_approved=True) # from Review.business
+    images = BusinessImage.objects.filter(business=business) # from Review.business
+    hours = BusinessHours.objects.filter(business=business).order_by('day_of_week') # from Review.business
+    context = {
+        "business": business,
+        "reviews": reviews,
+        "images": images,
+        "hours": hours,
+        "review_form": review_form,
+        "user_review_exists": user_review_exists,
+    }
+    return render(request, "business/bizinfo.html", context)
+
+def businessList(request:HttpRequest):
+    businesses = Business.objects.filter(status='active') \
+        .prefetch_related('categories', 'reviews') \
+        .annotate(review_count=Count('reviews'), avg_rating=Avg('reviews__rating'))
+
+    paginator = Paginator(businesses, 9)  # Show 9 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+    }
+    return render(request, 'business/listing.html', context)
+
+def contact(request):
+    return render(request, 'user/contact.html', {})
+
+def about(request):
+    return render(request, 'user/about.html', {})
 
 # Search view with optional filters for query, city, and category
-def searchView(request:HttpRequest):
-    query = request.GET.get("q")
-    city = request.GET.get("city")
-    category = request.GET.get("category")
+def searchView(request: HttpRequest):
+    query = request.GET.get("q", "")
+    city = request.GET.get("city", "")
+    category_id = request.GET.get("category", "")
 
-    businesses = Business.objects.filter(is_active=True)
+    businesses = Business.objects.filter(is_active=True).prefetch_related("categories")
 
     if query:
         businesses = businesses.filter(Q(name__icontains=query) | Q(description__icontains=query))
+    
     if city:
         businesses = businesses.filter(city__icontains=city)
-    if category:
-        businesses = businesses.filter(categories__name__icontains=category)
-    return render(request, "user/search.html", {"businesses": businesses.distinct()})
 
-# Map view of all businesses with coordinates
-def mapView(request):
-    businesses = Business.objects.filter(latitude__isnull=False, longitude__isnull=False, is_active=True)
-    return render(request, "user/map.html", {"businesses": businesses})
+    selected_category = None
+    if category_id.isdigit():
+        selected_category = get_object_or_404(BusinessCategory, id=category_id)
+        businesses = businesses.filter(categories=selected_category)
+
+    # Add pagination here (e.g., 6 businesses per page)
+    paginator = Paginator(businesses.distinct(), 6)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "page_obj": page_obj,
+        "query": query,
+        "city": city,
+        "selected_category": selected_category,
+        "categories": BusinessCategory.objects.all()
+    }
+    return render(request, "user/search.html", context)
 
 # User signup view with form handling
 def signupView(request: HttpRequest):

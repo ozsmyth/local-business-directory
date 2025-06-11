@@ -1,6 +1,58 @@
-<!-- owner_dashboard.html -->
 {% extends 'base.html' %}
 {% load static %}
+
+<!-- Page-specific CSS -->
+{% block extra_css %}
+<style>
+    .tab-content {
+        background-color: #f9fbfd;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .nav-tabs .nav-link.active {
+        background-color: #007bff;
+        color: white;
+        border-color: transparent;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    }
+
+    .card-text {
+        font-size: 0.9rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+    }
+
+    .card-img-top, .img-fluid {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        object-fit: cover;
+        height: 200px;
+    }
+
+    .btn {
+        border-radius: 6px;
+    }
+
+    .card-body {
+        background: white;
+        border-radius: 0 0 12px 12px;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -14,6 +66,38 @@
     {% endif %}
 
     <h2 class="mb-4">Welcome, {{ user.first_name|default:user.username|capfirst }}</h2>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Businesses</h5>
+                    <p class="display-6">{{ business_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Reviews</h5>
+                    <p class="display-6">{{ review_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Profile Status</h5>
+                    <p class="display-6">
+                        {% if profile_complete %}<span class="text-success">Complete</span>
+                        {% else %}<span class="text-danger">Incomplete</span>{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <ul class="nav nav-tabs" id="dashboardTab" role="tablist">
         <li class="nav-item" role="presentation">
@@ -31,22 +115,40 @@
                 <div class="row row-cols-1 row-cols-md-2 g-4">
                     {% for business in businesses %}
                     <div class="col">
-                        <div class="card shadow-sm">
-                            <!-- {% if business.logo %}
-                            <img src="{{ business.logo.url }}" class="card-img-top" alt="{{ business.name }} logo">
-                            {% endif %} -->
-                            {% if business.logo %}
-                                <img src="{{ business.logo.url }}" alt="{{ business.name }} logo" class="img-fluid">
-                            {% else %}
-                                <img src="{% static 'img/default-logo1.png' %}" alt="Default logo" class="img-fluid">
-                            {% endif %}
-
-                            <div class="card-body">
-                                <h5 class="card-title">{{ business.name }}</h5>
-                                <p class="card-text">{{ business.description|truncatewords:20 }}</p>
-                                <a href="{% url 'business_detail' slug=business.slug %}" class="btn btn-sm btn-primary">View</a>
-                                <a href="{% url 'edit_business' business_id=business.id %}" class="btn btn-sm btn-secondary">Edit</a>
-                            </div>
+                        <div class="card shadow-sm h-100">
+                            <div class="row g-0">
+                                <div class="col-md-4">
+                                    {% if business.logo %}
+                                        <img src="{{ business.logo.url }}" alt="{{ business.name }} logo" class="img-fluid rounded-start">
+                                    {% else %}
+                                        <img src="{% static 'img/default-logo1.png' %}" alt="Default logo" class="img-fluid rounded-start">
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body d-flex flex-column h-100">
+                                        <div>
+                                            <h5 class="card-title mb-1 text-primary">
+                                                {{ business.name }}
+                                                <span class="badge 
+                                                {% if business.status == 'active' %}bg-success
+                                                {% elif business.status == 'pending' %}bg-warning text-dark
+                                                {% else %}bg-secondary{% endif %}">
+                                                    {{ business.get_status_display }}
+                                                </span>
+                                            </h5>
+                                            <p class="card-text small text-muted mb-2">{{ business.description|truncatewords:20 }}</p>
+                                        </div>
+                                        <div  class="mt-auto d-flex justify-content-end gap-2">
+                                            <a href="{% url 'business_detail' slug=business.slug %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                            <a href="{% url 'edit_business' business_id=business.id %}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>  
                         </div>
                     </div>
                     {% endfor %}
@@ -63,16 +165,89 @@
                 <h4 class="mb-3">Add a New Business</h4>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-success shadow">
-                        <i class="bi bi-plus-circle"></i>Save Business
-                    </button>
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form.name.label_tag }}{{ form.name }}</div>
+                            <div class="col-md-6">{{ form.phone.label_tag }}{{ form.phone }}</div>
+                            <div class="col-md-6">{{ form.email.label_tag }}{{ form.email }}</div>
+                            <div class="col-md-6">{{ form.website.label_tag }}{{ form.website }}</div>
+                            <div class="col-md-6">{{ form.address.label_tag }}{{ form.address }}</div>
+                            <div class="col-md-6">{{ form.city.label_tag }}{{ form.city }}</div>
+                            <div class="col-md-6">{{ form.state.label_tag }}{{ form.state }}</div>
+                            <div class="col-md-6">{{ form.country.label_tag }}{{ form.country }}</div>
+                            <div class="col-md-6">{{ form.established_date.label_tag }}{{ form.established_date }}</div>
+                            <div class="col-md-6">{{ form.logo.label_tag }}{{ form.logo }}</div>
+                            <div class="col-12">{{ form.description.label_tag }}{{ form.description }}</div>
+
+                            <!-- Categories Checkboxes -->
+                            <div class="col-12">
+                                {{ form.categories.label_tag }}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for checkbox in form.categories %}
+                                        <div class="form-check me-3">
+                                            {{ checkbox.tag }} {{ checkbox.choice_label }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <hr>
+                            <!-- Featured Checkbox -->
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.featured.label_tag }}
+                                    {{ form.featured }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h5 class="mt-4">Upload Business Images</h5>
+                        {{ image_formset.management_form }}
+                        {% for form in image_formset %}
+                            <div class="mb-3">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        {{ form.image.label_tag }}
+                                        <div class="form-control p-0">
+                                            {{ form.image }}
+                                        </div>
+                                        {% for error in form.image.errors %}
+                                            <div class="text-danger">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.caption.label_tag }}
+                                        {{ form.caption }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <hr>
+
+                        <h5 class="mt-4">Business Hours</h5>
+                        {{ hours_formset.management_form }}
+                        {% for form in hours_formset %}
+                            <div class="row g-2 align-items-end mb-2">
+                                <div class="col-md-3">{{ form.day_of_week.label_tag }}{{ form.day_of_week }}</div>
+                                <div class="col-md-2">{{ form.opening_time.label_tag }}{{ form.opening_time }}</div>
+                                <div class="col-md-2">{{ form.closing_time.label_tag }}{{ form.closing_time }}</div>
+                                <div class="col-md-2 mt-4">{{ form.closed }}</div>
+                                {% if form.DELETE %}
+                                    <div class="col-md-2 mt-4">{{ form.DELETE.label_tag }} {{ form.DELETE }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-success shadow">
+                            <i class="bi bi-plus-circle"></i> Save Business
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bootstrap JS Bundle (for tab switching) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

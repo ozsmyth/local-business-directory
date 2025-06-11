@@ -1,0 +1,103 @@
+{% extends 'starter-page.html' %}
+{% load static %}
+
+{% block page_title %}Contact Us{% endblock %}
+{% block page_text %}
+  Odio et unde deleniti. Deserunt numquam exercitationem. 
+  Officiis quo odio sint voluptas consequatur ut a odio voluptatem. 
+  Sit dolorum debitis veritatis natus dolores. 
+  Quasi ratione sint. Sit quaerat ipsum dolorem.
+{% endblock %}
+{% block nav_page %}Contact{% endblock %}
+<!-- Contact Section -->
+    <section id="{% block section_id %}contact{% endblock %}" class="{% block section_class %}contact{% endblock %} section">
+      <!-- Section Title -->
+      <div class="container section-title">
+        <h2>{% block section_title %}Contact{% endblock %}</h2>
+        <div><span>{% block section_text %}Contact{% endblock %}</span> <span class="description-title">{% block Section_desc %}Us{% endblock %}</span></div>
+      </div><!-- End Section Title -->
+      
+      {% block content %}
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-5">
+            <div class="contact-info">
+              <div class="contact-card">
+                <h3>Contact Information</h3>
+                <p>Feel free to reach out with any questions about the book, speaking engagements, or media inquiries.</p>
+
+                <div class="contact-details">
+                  <div class="contact-item">
+                    <i class="bi bi-envelope"></i>
+                    <div>
+                      <h4>Email:</h4>
+                      <p>support@bizdirectory.com</p>
+                    </div>
+                  </div>
+
+                  <div class="contact-item">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                      <h4>Phone:</h4>
+                      <p>+234 (555) 123 4567</p>
+                    </div>
+                  </div>
+
+                  <div class="contact-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <div>
+                      <h4>Address:</h4>
+                      <p>123 Awolowo Street, Ikorodu City</p>
+                      <p>Lagos, Nigeria</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="social-links">
+                  <a href="#"><i class="bi bi-twitter"></i></a>
+                  <a href="#"><i class="bi bi-facebook"></i></a>
+                  <a href="#"><i class="bi bi-instagram"></i></a>
+                  <a href="#"><i class="bi bi-linkedin"></i></a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="contact-form-wrapper">
+              <form action="#" method="post" class="php-email-form">
+                <div class="row">
+                  <div class="col-md-6 form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" name="name" class="form-control" id="name" placeholder="John Doe" required="">
+                  </div>
+                  <div class="col-md-6 form-group mt-3 mt-md-0">
+                    <label for="email">Your Email</label>
+                    <input type="email" class="form-control" name="email" id="email" placeholder="john@example.com" required="">
+                  </div>
+                </div>
+                <div class="form-group mt-3">
+                  <label for="subject">Subject</label>
+                  <input type="text" class="form-control" name="subject" id="subject" placeholder="I loved your business!" required="">
+                </div>
+                <div class="form-group mt-3">
+                  <label for="message">Message</label>
+                  <textarea class="form-control" name="message" id="message" rows="7" placeholder="Your message here..." required=""></textarea>
+                </div>
+
+                <div class="my-3">
+                  <div class="loading">Loading</div>
+                  <div class="error-message"></div>
+                  <div class="sent-message">Your message has been sent. Thank you!</div>
+                </div>
+
+                <div class="text-center">
+                  <button type="submit">Send Message</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>  
+{% endblock %}

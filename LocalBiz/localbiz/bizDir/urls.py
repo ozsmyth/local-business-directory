@@ -1,22 +1,19 @@
 from django.urls import path
-from .views import homepage, signupView, loginView, logoutView, businessInfo, ownerDashboard, submitReview, searchView, mapView, editBusiness
+from .views import homepage, signupView, loginView, logoutView, businessInfo, ownerDashboard, searchView, editBusiness, businessList, contact, about
 
 
 urlpatterns = [
     path('home/', homepage, name='homepage'),
     path('business/<slug:slug>/', businessInfo, name='business_detail'),
     path('dashboard/', ownerDashboard, name='owner_dashboard'),
-    # path("business/add/", addBusiness, name="add_business"),
-    path("business/<int:business_id>/edit/", editBusiness, name="edit_business"),
-    path('review/<slug:slug>/', submitReview, name='submit_review'),
+    path("business/edit/<int:business_id>/", editBusiness, name="edit_business"),
+    path('listings/', businessList, name='business_list'),
     path('search/', searchView, name='search'),
-    path('map/', mapView, name='map_view'),
-    # path('about/', views.about, name='about'),
-    # path('listings/', views.listings, name='listings'),
-    # path('contact/', views.contact, name='contact'),
-    # path('faq/', views.faq, name='faq'),
-    # path('terms/', views.terms, name='terms'),
-    # path('privacy/', views.privacy, name='privacy'),
+    path('about/', about, name='about'),
+    # path('services/', services, name='services'),
+    path('contact/', contact, name='contact'),
+    # path('terms/', terms, name='terms'),
+    # path('privacy/', privacy, name='privacy'),
     path('signup/', signupView, name='signupage'),
     path('login/', loginView, name='loginpage'),
     path('logout/', logoutView, name='logoutpage'),

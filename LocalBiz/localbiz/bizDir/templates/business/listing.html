@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.img-hover-zoom {
+    transition: transform 0.3s ease;
+}
+.img-hover-zoom:hover {
+    transform: scale(1.05);
+}
+</style>
+
+<div class="container py-4">
+    <h2 class="mb-4 text-center">Explore Local Businesses</h2>
+
+    {% if page_obj %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for business in page_obj %}
+        <div class="col">
+            <div class="card h-100 shadow rounded-4 border-0 position-relative">
+
+                <!-- Featured Tag -->
+                {% if business.featured %}
+                    <span class="position-absolute top-0 end-0 m-2 badge bg-success">Featured</span>
+                {% endif %}
+
+                <!-- Business Logo -->
+                <div class="position-relative">
+                    {% if business.logo %}
+                        <img src="{{ business.logo.url }}" class="card-img-top rounded-top-4 img-hover-zoom" alt="{{ business.name }} logo">
+                    {% else %}
+                        <img src="{% static 'img/default-logo1.png' %}" class="card-img-top rounded-top-4 img-hover-zoom" alt="No logo">
+                    {% endif %}
+
+                    <!-- Category Icon -->
+                    {% with business.categories.first as category %}
+                    {% if category.icon %}
+                        <div class="position-absolute bottom-0 start-50 translate-middle-x mb-2">
+                            <img src="{{ category.icon.url }}" class="rounded-circle border border-white shadow" style="width: 50px; height: 50px;" alt="{{ category.name }}">
+                        </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body text-center">
+                    {% if category %}
+                        <h6 class="text-primary fw-semibold">{{ category.name }}</h6>
+                    {% endif %}
+
+                    <p class="mb-1 text-muted small">
+                        <i class="bi bi-geo-alt-fill me-1"></i> {{ business.address }}
+                    </p>
+                    <p class="mb-2 text-muted small">
+                        <i class="bi bi-telephone-fill me-1"></i> {{ business.phone }}
+                    </p>
+
+                    <hr class="my-2 text-muted">
+                </div>
+
+                <!-- Card Footer -->
+                <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center px-3 pb-3">
+                    <div class="text-muted small">
+                        <i class="bi bi-chat-left-text me-1"></i>
+                        {{ business.review_count }} Reviews
+                        {% if business.average_rating %}
+                            <span class="ms-2">⭐ {{ business.average_rating|floatformat:1 }}/5</span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'business_detail' business.slug %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="mt-4 d-flex justify-content-center">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+
+    {% else %}
+    <p class="text-center text-muted">No businesses found.</p>
+    {% endif %}
+</div>
+{% endblock %}
