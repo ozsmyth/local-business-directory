@@ -65,14 +65,19 @@
         {% endfor %}
     {% endif %}
 
-    <h2 class="mb-4">Welcome, {{ user.first_name|default:user.username|capfirst }}</h2>
+    <section id="" class="section">
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+        <div><span>Welcome,</span> <span class="description-title">{{ user.first_name|default:user.username|capfirst }}</span></div>
+    </div><!-- End Section Title -->
+    </section>
 
     <!-- Stats Row -->
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card shadow-sm text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Total Businesses</h5>
+                    <h5 class="card-title text-primary">Total Businesses</h5>
                     <p class="display-6">{{ business_count }}</p>
                 </div>
             </div>
@@ -80,7 +85,7 @@
         <div class="col-md-4">
             <div class="card shadow-sm text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Total Reviews</h5>
+                    <h5 class="card-title text-primary">Total Reviews</h5>
                     <p class="display-6">{{ review_count }}</p>
                 </div>
             </div>
@@ -88,7 +93,7 @@
         <div class="col-md-4">
             <div class="card shadow-sm text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Profile Status</h5>
+                    <h5 class="card-title text-primary">Profile Status</h5>
                     <p class="display-6">
                         {% if profile_complete %}<span class="text-success">Complete</span>
                         {% else %}<span class="text-danger">Incomplete</span>{% endif %}
@@ -97,7 +102,6 @@
             </div>
         </div>
     </div>
-
 
     <ul class="nav nav-tabs" id="dashboardTab" role="tablist">
         <li class="nav-item" role="presentation">
@@ -139,12 +143,18 @@
                                             <p class="card-text small text-muted mb-2">{{ business.description|truncatewords:20 }}</p>
                                         </div>
                                         <div  class="mt-auto d-flex justify-content-end gap-2">
+                                            {% if business.status == 'active' %}
                                             <a href="{% url 'business_detail' slug=business.slug %}" class="btn btn-sm btn-outline-primary">
                                                 <i class="bi bi-eye"></i> View
                                             </a>
                                             <a href="{% url 'edit_business' business_id=business.id %}" class="btn btn-sm btn-outline-secondary">
                                                 <i class="bi bi-pencil"></i> Edit
                                             </a>
+                                            {% else %}
+                                            <a href="{% url 'edit_business' business_id=business.id %}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -166,23 +176,23 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                         <div class="row g-3">
-                            <div class="col-md-6">{{ form.name.label_tag }}{{ form.name }}</div>
-                            <div class="col-md-6">{{ form.phone.label_tag }}{{ form.phone }}</div>
-                            <div class="col-md-6">{{ form.email.label_tag }}{{ form.email }}</div>
-                            <div class="col-md-6">{{ form.website.label_tag }}{{ form.website }}</div>
-                            <div class="col-md-6">{{ form.address.label_tag }}{{ form.address }}</div>
-                            <div class="col-md-6">{{ form.city.label_tag }}{{ form.city }}</div>
-                            <div class="col-md-6">{{ form.state.label_tag }}{{ form.state }}</div>
-                            <div class="col-md-6">{{ form.country.label_tag }}{{ form.country }}</div>
-                            <div class="col-md-6">{{ form.established_date.label_tag }}{{ form.established_date }}</div>
-                            <div class="col-md-6">{{ form.logo.label_tag }}{{ form.logo }}</div>
-                            <div class="col-12">{{ form.description.label_tag }}{{ form.description }}</div>
+                            <div class="col-md-6">{{ business_form.name.label_tag }}{{ business_form.name }}</div>
+                            <div class="col-md-6">{{ business_form.phone.label_tag }}{{ business_form.phone }}</div>
+                            <div class="col-md-6">{{ business_form.email.label_tag }}{{ business_form.email }}</div>
+                            <div class="col-md-6">{{ business_form.website.label_tag }}{{ business_form.website }}</div>
+                            <div class="col-md-6">{{ business_form.address.label_tag }}{{ business_form.address }}</div>
+                            <div class="col-md-6">{{ business_form.city.label_tag }}{{ business_form.city }}</div>
+                            <div class="col-md-6">{{ business_form.state.label_tag }}{{ business_form.state }}</div>
+                            <div class="col-md-6">{{ business_form.country.label_tag }}{{ business_form.country }}</div>
+                            <div class="col-md-6">{{ business_form.established_date.label_tag }}{{ business_form.established_date }}</div>
+                            <div class="col-md-6">{{ business_form.logo.label_tag }}{{ business_form.logo }}</div>
+                            <div class="col-12">{{ business_form.description.label_tag }}{{ business_form.description }}</div>
 
                             <!-- Categories Checkboxes -->
                             <div class="col-12">
-                                {{ form.categories.label_tag }}
+                                {{ business_form.categories.label_tag }}
                                 <div class="d-flex flex-wrap gap-2">
-                                    {% for checkbox in form.categories %}
+                                    {% for checkbox in business_form.categories %}
                                         <div class="form-check me-3">
                                             {{ checkbox.tag }} {{ checkbox.choice_label }}
                                         </div>
@@ -193,8 +203,8 @@
                             <!-- Featured Checkbox -->
                             <div class="col-12">
                                 <div class="form-check">
-                                    {{ form.featured.label_tag }}
-                                    {{ form.featured }}
+                                    {{ business_form.featured.label_tag }}
+                                    {{ business_form.featured }}
                                 </div>
                             </div>
                         </div>
@@ -202,43 +212,39 @@
                         <hr>
 
                         <h5 class="mt-4">Upload Business Images</h5>
-                        {{ image_formset.management_form }}
-                        {% for form in image_formset %}
                             <div class="mb-3">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        {{ form.image.label_tag }}
+                                        {{ image_form.image.label_tag }}
                                         <div class="form-control p-0">
-                                            {{ form.image }}
+                                            {{ image_form.image }}
                                         </div>
-                                        {% for error in form.image.errors %}
+                                        {% for error in image_form.image.errors %}
                                             <div class="text-danger">{{ error }}</div>
                                         {% endfor %}
                                     </div>
                                     <div class="col-md-6">
-                                        {{ form.caption.label_tag }}
-                                        {{ form.caption }}
+                                        {{ image_form.caption.label_tag }}
+                                        {{ image_form.caption }}
                                     </div>
                                 </div>
                             </div>
-                        {% endfor %}
 
                         <hr>
 
                         <h5 class="mt-4">Business Hours</h5>
-                        {{ hours_formset.management_form }}
-                        {% for form in hours_formset %}
+                        {% for day, form in hours_forms %}
                             <div class="row g-2 align-items-end mb-2">
-                                <div class="col-md-3">{{ form.day_of_week.label_tag }}{{ form.day_of_week }}</div>
-                                <div class="col-md-2">{{ form.opening_time.label_tag }}{{ form.opening_time }}</div>
-                                <div class="col-md-2">{{ form.closing_time.label_tag }}{{ form.closing_time }}</div>
+                                <!-- <div class="col-md-3">{{ hours_form.day_of_week.label_tag }}{{ hours_form.day_of_week }}</div> -->
+                                 <div class="col-md-3"><label>{{ day }}</label>{{ form.day_of_week }}</div>
+                                <div class="col-md-2">{{ form.opening_time }}</div>
+                                <div class="col-md-2">{{ form.closing_time }}</div>
                                 <div class="col-md-2 mt-4">{{ form.closed }}</div>
                                 {% if form.DELETE %}
                                     <div class="col-md-2 mt-4">{{ form.DELETE.label_tag }} {{ form.DELETE }}</div>
                                 {% endif %}
                             </div>
                         {% endfor %}
-
                     <div class="mt-3">
                         <button type="submit" class="btn btn-success shadow">
                             <i class="bi bi-plus-circle"></i> Save Business

@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q, Count, Avg
-from .forms import BusinessForm, ReviewForm, BusinessImageFormSet, BusinessHoursFormSet   # You'll create this form
+import calendar
+from .forms import BusinessForm, ReviewForm, BusinessImageForm, BusinessHoursForm   # You'll create this form
 from .models import Business, BusinessCategory, BusinessHours, BusinessImage, Review, UserProfile
 
 # Create your views here.
@@ -64,42 +65,51 @@ def ownerDashboard(request: HttpRequest):
 
     # Handle form submission
     if request.method == "POST":
-        form = BusinessForm(request.POST, request.FILES)
-        image_formset = BusinessImageFormSet(request.POST, request.FILES, queryset=BusinessImage.objects.none())
-        hours_formset = BusinessHoursFormSet(request.POST, queryset=BusinessHours.objects.none())
-        if form.is_valid() and image_formset.is_valid() and hours_formset.is_valid():
+        business_form = BusinessForm(request.POST, request.FILES)
+        image_form = BusinessImageForm(request.POST, request.FILES)
+        hours_form = BusinessHoursForm(request.POST)
+
+        # Business Hours: One form per day
+        hours_forms = []
+        all_hours_valid = True
+        for day in range(7):
+            form = BusinessHoursForm(request.POST, prefix=f"day_{day}")
+            hours_forms.append((calendar.day_name[day], form))
+            if not form.is_valid():
+                all_hours_valid = False
+
+        if business_form.is_valid() and image_form.is_valid() and all_hours_valid:
             business = form.save(commit=False)
             business.owner = user
             business.save()
-            form.save_m2m()
-
-            # Save business hours
-            hours = hours_formset.save(commit=False)
-            for hour in hours:
-                hour.business = business
-                hour.save()
+            business_form.save_m2m()
 
             # Save images
-            images = image_formset.save(commit=False)
-            for image in images:
-                image.business = business
-                image.save()
+            image = image_form.save(commit=False)
+            image.business = business
+            image.save()
+
+            # Save business hours
+            for _, form in hours_forms:
+                hour = hours_form.save(commit=False)
+                hour.business = business
+                hour.save()
 
             messages.success(request, "Business added successfully!")
             return redirect("owner_dashboard")
         else:
             messages.error(request, "Please correct the errors below.")
     else:
-        form = BusinessForm()
-        image_formset = BusinessImageFormSet(queryset=BusinessImage.objects.none(), prefix='images')
-        hours_formset = BusinessHoursFormSet(queryset=BusinessHours.objects.none(), prefix='hours')
+        business_form = BusinessForm()
+        image_form = BusinessImageForm()
+        hours_forms = [(calendar.day_name[day], BusinessHoursForm(prefix=f"day_{day}")) for day in range(7)]
 
     context = {
         "user": user,
         "businesses": businesses,
-        "form": form,
-        "image_formset": image_formset,
-        "hours_formset": hours_formset,
+        "business_form": business_form,
+        "image_form": image_form,
+        "hours_forms": hours_forms,
         "business_count": business_count,
         "review_count": review_count,
         "profile_complete": profile_complete,
@@ -117,42 +127,41 @@ def editBusiness(request:HttpRequest, business_id):
     except Business.DoesNotExist:
         raise Http404("Business not found.")
 
-    if request.method == "POST":
-        form = BusinessForm(request.POST, request.FILES, instance=business)
-        image_formset = BusinessImageFormSet(request.POST, request.FILES, queryset=business.images.all(), prefix='images')
-        hours_formset = BusinessHoursFormSet(request.POST, queryset=business.hours.all(), prefix='hours')
-        if form.is_valid() and image_formset.is_valid() and hours_formset.is_valid():
-            form.save()
+    business_form = BusinessForm(request.POST or None, request.FILES or None, instance=business)
+    image = BusinessImage.objects.filter(business=business).first()
+    image_form = BusinessImageForm(request.POST or None, request.FILES or None, instance=image)
 
-            for image_form in image_formset:
-                if image_form.cleaned_data.get('DELETE') and image_form.instance.pk:
-                    image_form.instance.delete()
-                else:
-                    image = image_form.save(commit=False)
-                    image.business = business
-                    image.save()
+    hours_forms = []
+    for day in range(7):
+        hours = BusinessHours.objects.filter(business=business, day_of_week=day).first()
+        form = BusinessHoursForm(request.POST or None, instance=hours, prefix=f"day_{day}")
+        hours_forms.append((calendar.day_name[day], form))
 
-            for hour_form in hours_formset:
-                if hour_form.cleaned_data.get('DELETE') and hour_form.instance.pk:
-                    hour_form.instance.delete()
-                else:
-                    hour = hour_form.save(commit=False)
-                    hour.business = business
-                    hour.save()
+    if request.method == 'POST':
+        forms_valid = business_form.is_valid() and image_form.is_valid()
+        hours_valid = all(form.is_valid() for _, form in hours_forms)
+
+        if forms_valid and hours_valid:
+            business_form.save()
+            image_obj = image_form.save(commit=False)
+            image_obj.business = business
+            image_obj.save()
+
+            for _, form in hours_forms:
+                hour_obj = form.save(commit=False)
+                hour_obj.business = business
+                hour_obj.save()
                 
             messages.success(request, "Business updated successfully!")
             return redirect("owner_dashboard")
         else:
             messages.error(request, "Please correct the errors below.")
-    else:
-        form = BusinessForm(instance=business)
-        image_formset = BusinessImageFormSet(queryset=business.images.all(), prefix='images')
-        hours_formset = BusinessHoursFormSet(queryset=business.hours.all(), prefix='hours')
+
     return render(request, "user/edit_business.html",  {
-        "form": form,
         "business": business,
-        "image_formset": image_formset,
-        "hours_formset": hours_formset
+        'business_form': business_form,
+        'image_form': image_form,
+        'hours_forms': hours_forms,
     })
 
 # Detailed view of a business with reviews, images and operating hours
@@ -203,9 +212,9 @@ def businessInfo(request:HttpRequest, slug):
 def businessList(request:HttpRequest):
     businesses = Business.objects.filter(status='active') \
         .prefetch_related('categories', 'reviews') \
-        .annotate(review_count=Count('reviews'), avg_rating=Avg('reviews__rating'))
+        .annotate(review_count=Count('reviews'), average_rating=Avg('reviews__rating'))
 
-    paginator = Paginator(businesses, 9)  # Show 9 per page
+    paginator = Paginator(businesses, 6)  # Show 6 per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

@@ -9,10 +9,24 @@
 .img-hover-zoom:hover {
     transform: scale(1.05);
 }
+.card-img-top {
+    max-height: 180px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .card:hover .card-img-top {
+    transform: scale(1.02);
+  }
 </style>
 
 <div class="container py-4">
-    <h2 class="mb-4 text-center">Explore Local Businesses</h2>
+    
+    <section id="" class="section">
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+        <div><span>Explore Local</span> <span class="description-title">Businesses</span></div>
+    </div><!-- End Section Title -->
 
     {% if page_obj %}
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -34,38 +48,40 @@
                     {% endif %}
 
                     <!-- Category Icon -->
-                    {% with business.categories.first as category %}
+                    {% with category=business.categories.all.0 %}
                     {% if category.icon %}
-                        <div class="position-absolute bottom-0 start-50 translate-middle-x mb-2">
-                            <img src="{{ category.icon.url }}" class="rounded-circle border border-white shadow" style="width: 50px; height: 50px;" alt="{{ category.name }}">
+                        <div class="position-absolute top-100 start-50 translate-middle border bg-primary rounded-circle shadow d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
+                            <i class="{{ category.icon }} fs-4 text-white"></i>
                         </div>
+
                     {% endif %}
                     {% endwith %}
                 </div>
 
                 <!-- Card Body -->
-                <div class="card-body text-center">
+                <div class="card-body text-center py-5">
+                    {% with category=business.categories.all.0 %}
                     {% if category %}
-                        <h6 class="text-primary fw-semibold">{{ category.name }}</h6>
+                        <h5 class="text-primary fw-semibold">{{ category.name }}</h5>
                     {% endif %}
-
+                    {% endwith %}
                     <p class="mb-1 text-muted small">
-                        <i class="bi bi-geo-alt-fill me-1"></i> {{ business.address }}
+                        <i class="bi bi-geo-alt-fill me-1 text-primary"></i> {{ business.address }}
                     </p>
                     <p class="mb-2 text-muted small">
-                        <i class="bi bi-telephone-fill me-1"></i> {{ business.phone }}
+                        <i class="bi bi-telephone-fill me-1 text-primary"></i> {{ business.phone }}
                     </p>
 
                     <hr class="my-2 text-muted">
                 </div>
-
+<!-- ⭐ -->
                 <!-- Card Footer -->
                 <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center px-3 pb-3">
                     <div class="text-muted small">
-                        <i class="bi bi-chat-left-text me-1"></i>
-                        {{ business.review_count }} Reviews
+                        <i class="bi bi-chat-left-text me-1 text-primary"></i>
+                        {{ business.review_count }} Review(s)
                         {% if business.average_rating %}
-                            <span class="ms-2">⭐ {{ business.average_rating|floatformat:1 }}/5</span>
+                            <span class="ms-2"><i class="bi bi-star-fill text-warning"></i> {{ business.average_rating|floatformat:1 }}/5</span>
                         {% endif %}
                     </div>
                     <a href="{% url 'business_detail' business.slug %}" class="btn btn-sm btn-outline-primary">View Details</a>
@@ -74,7 +90,7 @@
         </div>
         {% endfor %}
     </div>
-
+    </section>
     <!-- Pagination Controls -->
     <div class="mt-4 d-flex justify-content-center">
         <nav>

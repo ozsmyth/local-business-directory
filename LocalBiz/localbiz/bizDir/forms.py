@@ -1,5 +1,4 @@
 from django import forms
-from django.forms import modelformset_factory
 from .models import Business, BusinessImage, BusinessHours, Review
 
 ### Business Form ###
@@ -58,17 +57,4 @@ class ReviewForm(forms.ModelForm):
             "comment": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
         }
 
-### Formsets ###
-BusinessImageFormSet = modelformset_factory(
-    BusinessImage,
-    form=BusinessImageForm,
-    extra=1,
-    can_delete=True
-)
 
-BusinessHoursFormSet = modelformset_factory(
-    BusinessHours,
-    form=BusinessHoursForm,
-    extra=1,  # We'll use existing 7 records later
-    can_delete=True
-)

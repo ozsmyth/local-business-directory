@@ -2,13 +2,18 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h4 class="mb-4 text-primary">{{ business.name|default:"Add a New Business" }}</h4>
+<div class="container py-4 ">
+    <div class="row justify-content-center ">
+        <div class="col-md-12 col-lg-10">
+            <section style="padding-bottom: 0;">
+                <!-- Section Title -->
+                <div class="section-title" data-aos="fade-up">
+                    <div><span>Edit</span> <span class="description-title">Business</span></div>
+                </div><!-- End Section Title -->
+            </section>
 
+                <div class="card p-4 shadow">
+                    <h4 class="mb-4 text-primary">Edit Business : {{ business.name }}</h4>
                     {% if messages %}
                         {% for message in messages %}
                             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -18,11 +23,9 @@
                         {% endfor %}
                     {% endif %}
 
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}
+                    {% if business_form.non_field_errors %}
+                        <div class="alert alert-danger"></div>
                                 <div>{{ error }}</div>
-                            {% endfor %}
                         </div>
                     {% endif %}
 
@@ -30,23 +33,23 @@
                         {% csrf_token %}
 
                         <div class="row g-3">
-                            <div class="col-md-6">{{ form.name.label_tag }}{{ form.name }}</div>
-                            <div class="col-md-6">{{ form.phone.label_tag }}{{ form.phone }}</div>
-                            <div class="col-md-6">{{ form.email.label_tag }}{{ form.email }}</div>
-                            <div class="col-md-6">{{ form.website.label_tag }}{{ form.website }}</div>
-                            <div class="col-md-6">{{ form.address.label_tag }}{{ form.address }}</div>
-                            <div class="col-md-6">{{ form.city.label_tag }}{{ form.city }}</div>
-                            <div class="col-md-6">{{ form.state.label_tag }}{{ form.state }}</div>
-                            <div class="col-md-6">{{ form.country.label_tag }}{{ form.country }}</div>
-                            <div class="col-md-6">{{ form.established_date.label_tag }}{{ form.established_date }}</div>
-                            <div class="col-md-6">{{ form.logo.label_tag }}{{ form.logo }}</div>
-                            <div class="col-12">{{ form.description.label_tag }}{{ form.description }}</div>
+                            <div class="col-md-6">{{ business_form.name.label_tag }}{{ business_form.name }}</div>
+                            <div class="col-md-6">{{ business_form.phone.label_tag }}{{ business_form.phone }}</div>
+                            <div class="col-md-6">{{ business_form.email.label_tag }}{{ business_form.email }}</div>
+                            <div class="col-md-6">{{ business_form.website.label_tag }}{{ business_form.website }}</div>
+                            <div class="col-md-6">{{ business_form.address.label_tag }}{{ business_form.address }}</div>
+                            <div class="col-md-6">{{ business_form.city.label_tag }}{{ business_form.city }}</div>
+                            <div class="col-md-6">{{ business_form.state.label_tag }}{{ business_form.state }}</div>
+                            <div class="col-md-6">{{ business_form.country.label_tag }}{{ business_form.country }}</div>
+                            <div class="col-md-6">{{ business_form.established_date.label_tag }}{{ business_form.established_date }}</div>
+                            <div class="col-md-6">{{ business_form.logo.label_tag }}{{ business_form.logo }}</div>
+                            <div class="col-12">{{ business_form.description.label_tag }}{{ business_form.description }}</div>
 
                             <!-- Categories -->
                             <div class="col-12">
-                                {{ form.categories.label_tag }}
+                                {{ business_form.categories.label_tag }}
                                 <div class="d-flex flex-wrap gap-2">
-                                    {% for checkbox in form.categories %}
+                                    {% for checkbox in business_form.categories %}
                                         <div class="form-check me-3">
                                             {{ checkbox.tag }} {{ checkbox.choice_label }}
                                         </div>
@@ -57,8 +60,8 @@
                             <!-- Featured -->
                             <div class="col-12">
                                 <div class="form-check">
-                                    {{ form.featured }}
-                                    {{ form.featured.label_tag }}
+                                    {{ business_form.featured }}
+                                    {{ business_form.featured.label_tag }}
                                 </div>
                             </div>
                         </div>
@@ -67,54 +70,52 @@
 
                         <!-- Images -->
                         <h5 class="mt-4">Upload Business Images</h5>
-                        {{ image_formset.management_form }}
-                        {% if image_formset.non_form_errors %}
+                
+                        {% if image_form.non_form_errors %}
                             <div class="alert alert-danger">
-                                {{ image_formset.non_form_errors }}
+                                {{ image_form.non_form_errors }}
                             </div>
                         {% endif %}
 
-                        {% for form in image_formset %}
                             <div class="mb-3">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        {{ form.image.label_tag }}
+                                        {{ image_form.image.label_tag }}
                                         <div class="form-control p-0">
-                                            {{ form.image }}
+                                            {{ image_form.image }}
                                         </div>
-                                        {% for error in form.image.errors %}
+                                        {% for error in image_form.image.errors %}
                                             <div class="text-danger">{{ error }}</div>
                                         {% endfor %}
                                     </div>
                                     <div class="col-md-5">
-                                        {{ form.caption.label_tag }}
-                                        {{ form.caption }}
+                                        {{ image_form.caption.label_tag }}
+                                        {{ image_form.caption }}
                                     </div>
-                                    {% if form.DELETE %}
+                                    {% if image_form.DELETE %}
                                         <div class="col-md-1 d-flex align-items-center">
-                                            {{ form.DELETE }} <label class="form-check-label ms-1">Delete</label>
+                                            {{ image_form.DELETE }} <label class="form-check-label ms-1">Delete</label>
                                         </div>
                                     {% endif %}
                                 </div>
                             </div>
-                        {% endfor %}
 
                         <hr>
 
                         <!-- Hours -->
                         <h5 class="mt-4">Business Hours</h5>
-                        {{ hours_formset.management_form }}
-                        {% if hours_formset.non_form_errors %}
+                        
+                        {% if hours_forms.non_form_errors %}
                             <div class="alert alert-danger">
-                                {{ hours_formset.non_form_errors }}
+                                {{ hours_forms.non_form_errors }}
                             </div>
                         {% endif %}
-
-                        {% for form in hours_formset %}
+                        {% for day, form in hours_forms %}
                             <div class="row g-2 align-items-end mb-2">
-                                <div class="col-md-3">{{ form.day_of_week.label_tag }}{{ form.day_of_week }}</div>
-                                <div class="col-md-2">{{ form.opening_time.label_tag }}{{ form.opening_time }}</div>
-                                <div class="col-md-2">{{ form.closing_time.label_tag }}{{ form.closing_time }}</div>
+                                <div class="col-md-3"><strong>{{ day }}</strong> {{ form.day_of_week }}</div>
+                                <!-- <div class="col-md-3">{{ form.day_of_week }}</div> -->
+                                <div class="col-md-2">{{ form.opening_time }}</div>
+                                <div class="col-md-2">{{ form.closing_time }}</div>
                                 <div class="col-md-2 mt-4">{{ form.closed }}</div>
                                 {% if form.DELETE %}
                                     <div class="col-md-2 mt-4">{{ form.DELETE.label_tag }} {{ form.DELETE }}</div>
@@ -127,13 +128,12 @@
                                 <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
                             </a>
                             <button type="submit" class="btn btn-primary shadow">
-                                <i class="bi bi-save"></i> Save Business
+                                <i class="bi bi-save"></i> Update Business
                             </button>
                         </div>
                     </form>
 
                 </div>
-            </div>
         </div>
     </div>
 </div>

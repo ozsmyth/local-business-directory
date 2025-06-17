@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Search Results{% endblock %}
+
+
 
 {% block content %}
+
 <div class="container py-5">
     {% if query or city or selected_category %}
     <div class="mb-3">
@@ -21,8 +23,11 @@
     </div>
     {% endif %}
 
-    <h2 class="text-center mb-4 text-primary">Search Results</h2>
-
+    <section id="" class="section">
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
+        <div><span>Search</span> <span class="description-title">Results</span></div>
+    </div><!-- End Section Title -->
     <form method="get" action="{% url 'search' %}" class="row g-2 mb-4 justify-content-center">
         <div class="col-md-4">
             <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search...">
@@ -44,6 +49,7 @@
             <button type="submit" class="btn btn-primary">Search</button>
         </div>
     </form>
+    </section>
 
     {% if page_obj %}
     <div class="row row-cols-1 row-cols-md-3 g-4">

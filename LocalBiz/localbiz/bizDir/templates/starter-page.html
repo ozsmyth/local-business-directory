@@ -36,7 +36,7 @@
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container position-relative d-flex align-items-center justify-content-between">
 
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+      <a href="{% url 'homepage' %}" class="logo d-flex align-items-center me-auto me-xl-0">
         <!-- Uncomment the line below if you also wish to use an image logo -->
         <img src="{% static 'assets/img/logo.webp' %}" alt="business-directory-logo">
         <h1 class="sitename">BizDirectory</h1>
@@ -60,7 +60,7 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
-      <a class="btn-getstarted" href="#"> Get Started </a>
+      <a class="btn-getstarted" href="{% url 'loginpage' %}"> Get Started </a>
         
 
     </div>
@@ -115,8 +115,8 @@
           <i class="bi bi-geo-alt icon"></i>
           <div class="address">
             <h4>Address</h4>
-            <p>A108 Adam Street</p>
-            <p>New York, NY 535022</p>
+            <p>108A Adam Street</p>
+            <p>Ikeja, Lagos Nigeria.</p>
             <p></p>
           </div>
 
@@ -127,8 +127,8 @@
           <div>
             <h4>Contact</h4>
             <p>
-              <strong>Phone:</strong> <span>+1 5589 55488 55</span><br>
-              <strong>Email:</strong> <span>info@example.com</span><br>
+              <strong>Phone:</strong> <span>+234 8089 554 8855</span><br>
+              <strong>Email:</strong> <span>info@bizdirectory.com</span><br>
             </p>
           </div>
         </div>
