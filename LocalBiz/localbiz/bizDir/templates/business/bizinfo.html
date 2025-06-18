@@ -19,7 +19,7 @@
       {% endif %}
 
       {% if business.featured %}
-        <span class="badge bg-warning text-dark">🌟 Featured</span>
+        <span class="badge bg-primary text-white p-2"><i class="bi bi-star-fill text-warning"></i> Featured</span>
       {% endif %}
       {% if business.status != 'active' %}
         <span class="badge bg-danger">Not Active</span>
@@ -65,22 +65,38 @@
 
       <h5 class="mt-4">Reviews</h5>
       {% for review in reviews %}
-        <div class="border p-3 mb-3 rounded">
-          <strong>{{ review.user.username }}</strong>
-          <span class="badge bg-success">{{ review.rating }}/5</span>
-          <p>{{ review.comment }}</p>
+        <div class="card mb-3 shadow-sm border-0">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                  style="width: 40px; height: 40px; font-weight: bold;">
+                {{ review.user.username|first|upper }}
+              </div>
+              <div>
+                <strong>{{ review.user.username }}</strong>
+                <span class="badge bg-success ms-2 py-2 px-3"><i class="bi bi-star-fill text-warning "></i>  {{ review.rating }}/5</span>
+              </div>
+            </div>
+            <p class="mb-0">{{ review.comment }}</p>
+          </div>
         </div>
       {% empty %}
         <p>No reviews yet.</p>
       {% endfor %}
 
-      <h5 class="mt-4">Leave a Review</h5>
       {% if request.user.is_authenticated %}
-        <form method="POST">
-          {% csrf_token %}
-          {{ review_form.as_p }}
-          <button class="btn btn-primary" type="submit">Submit</button>
-        </form>
+        {% if not user_review_exists %}
+          <h5 class="mt-4">Leave a Review</h5>
+          <form method="POST">
+            {% csrf_token %}
+            {{ review_form.as_p }}
+            <button class="btn btn-primary" type="submit">Submit</button>
+          </form>
+        {% else %}
+          <div class="alert alert-info mt-4">
+            You have already submitted a review. Thank you!
+          </div>
+        {% endif %}
       {% else %}
         <p>Please <a href="{% url 'login' %}?next={{ request.path }}">log in</a> to leave a review.</p>
       {% endif %}
